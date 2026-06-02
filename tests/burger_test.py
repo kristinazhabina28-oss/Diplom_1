@@ -3,99 +3,93 @@ import pytest
 from praktikum.ingredient_types import INGREDIENT_TYPE_FILLING, INGREDIENT_TYPE_SAUCE
 
 
-class TestBurgerInit:
-    def test_new_burger_has_no_bun(self, burger):
-        assert burger.bun is None
+class TestFreshBurger:
+    def test_new_burger_has_no_bun(self, draft_burger):
+        assert draft_burger.bun is None
 
-    def test_new_burger_has_empty_ingredients(self, burger):
-        assert burger.ingredients == []
-
-
-class TestSetBuns:
-    def test_set_buns_assigns_bun(self, burger, bun_mock):
-        burger.set_buns(bun_mock)
-        assert burger.bun is bun_mock
+    def test_new_burger_has_empty_ingredients(self, draft_burger):
+        assert draft_burger.ingredients == []
 
 
-class TestAddIngredient:
+class TestBurgerAssembly:
+    def test_selected_bun_is_saved(self, draft_burger, selected_bun):
+        draft_burger.set_buns(selected_bun)
+        assert draft_burger.bun is selected_bun
+
     @pytest.mark.parametrize('ingredient_type,name', [
-        (INGREDIENT_TYPE_SAUCE, 'hot sauce'),
-        (INGREDIENT_TYPE_FILLING, 'cutlet'),
+        (INGREDIENT_TYPE_SAUCE, 'galaxy glaze'),
+        (INGREDIENT_TYPE_FILLING, 'meteor patty'),
     ])
-    def test_add_ingredient_appends(self, burger, make_ingredient, ingredient_type, name):
-        ingredient = make_ingredient(ingredient_type=ingredient_type, name=name)
-        burger.add_ingredient(ingredient)
-        assert burger.ingredients == [ingredient]
+    def test_new_layer_goes_to_the_end(self, draft_burger, ingredient_factory, ingredient_type, name):
+        order_layer = ingredient_factory(ingredient_type=ingredient_type, name=name)
+        draft_burger.add_ingredient(order_layer)
+        assert draft_burger.ingredients == [order_layer]
 
-    def test_add_several_ingredients_keeps_order(self, burger, make_ingredient):
-        first = make_ingredient(name='one')
-        second = make_ingredient(name='two')
-        burger.add_ingredient(first)
-        burger.add_ingredient(second)
-        assert burger.ingredients == [first, second]
+    def test_added_layers_keep_queue_order(self, draft_burger, ingredient_factory):
+        lower_layer = ingredient_factory(name='orbit onion')
+        upper_layer = ingredient_factory(name='plasma tomato')
+        draft_burger.add_ingredient(lower_layer)
+        draft_burger.add_ingredient(upper_layer)
+        assert draft_burger.ingredients == [lower_layer, upper_layer]
 
+    def test_layer_can_be_deleted_by_position(self, draft_burger, ingredient_factory):
+        removable_layer = ingredient_factory(name='old layer')
+        remaining_layer = ingredient_factory(name='keeper layer')
+        draft_burger.add_ingredient(removable_layer)
+        draft_burger.add_ingredient(remaining_layer)
+        draft_burger.remove_ingredient(0)
+        assert draft_burger.ingredients == [remaining_layer]
 
-class TestRemoveIngredient:
-    def test_remove_ingredient_by_index(self, burger, make_ingredient):
-        first = make_ingredient(name='one')
-        second = make_ingredient(name='two')
-        burger.add_ingredient(first)
-        burger.add_ingredient(second)
-        burger.remove_ingredient(0)
-        assert burger.ingredients == [second]
-
-
-class TestMoveIngredient:
-    def test_move_ingredient_changes_order(self, burger, make_ingredient):
-        first = make_ingredient(name='one')
-        second = make_ingredient(name='two')
-        third = make_ingredient(name='three')
-        for ingredient in (first, second, third):
-            burger.add_ingredient(ingredient)
-        burger.move_ingredient(0, 2)
-        assert burger.ingredients == [second, third, first]
+    def test_layer_moves_to_requested_position(self, draft_burger, ingredient_factory):
+        first_layer = ingredient_factory(name='first')
+        middle_layer = ingredient_factory(name='middle')
+        final_layer = ingredient_factory(name='final')
+        for order_layer in (first_layer, middle_layer, final_layer):
+            draft_burger.add_ingredient(order_layer)
+        draft_burger.move_ingredient(0, 2)
+        assert draft_burger.ingredients == [middle_layer, final_layer, first_layer]
 
 
 class TestGetPrice:
     @pytest.mark.parametrize('bun_price,ingredient_prices,expected', [
-        (100, [], 200),
-        (100, [50], 250),
-        (200, [50, 150], 600),
+        (90, (), 180),
+        (120, (35,), 275),
+        (145, (15, 40, 60), 405),
     ])
-    def test_get_price(self, burger, bun_mock, make_ingredient,
+    def test_get_price(self, draft_burger, selected_bun, ingredient_factory,
                        bun_price, ingredient_prices, expected):
-        bun_mock.get_price.return_value = bun_price
-        burger.set_buns(bun_mock)
-        for price in ingredient_prices:
-            burger.add_ingredient(make_ingredient(price=price))
+        selected_bun.get_price.return_value = bun_price
+        draft_burger.set_buns(selected_bun)
+        for layer_price in ingredient_prices:
+            draft_burger.add_ingredient(ingredient_factory(price=layer_price))
 
-        assert burger.get_price() == expected
+        assert draft_burger.get_price() == expected
 
-    def test_get_price_uses_bun_price(self, burger, bun_mock):
-        burger.set_buns(bun_mock)
-        burger.get_price()
-        bun_mock.get_price.assert_called_once_with()
+    def test_get_price_uses_bun_price(self, draft_burger, selected_bun):
+        draft_burger.set_buns(selected_bun)
+        draft_burger.get_price()
+        selected_bun.get_price.assert_called_once_with()
 
 
-class TestGetReceipt:
-    def test_receipt_without_ingredients(self, burger, bun_mock):
-        burger.set_buns(bun_mock)
+class TestReceiptText:
+    def test_receipt_without_ingredients(self, draft_burger, selected_bun):
+        draft_burger.set_buns(selected_bun)
         expected = (
-            '(==== black bun ====)\n'
-            '(==== black bun ====)\n\n'
-            'Price: 200'
+            '(==== nebula bun ====)\n'
+            '(==== nebula bun ====)\n\n'
+            'Price: 250'
         )
-        assert burger.get_receipt() == expected
+        assert draft_burger.get_receipt() == expected
 
-    def test_receipt_with_ingredients(self, burger, bun_mock, make_ingredient):
-        burger.set_buns(bun_mock)
-        burger.add_ingredient(make_ingredient(INGREDIENT_TYPE_SAUCE, 'hot sauce', 100))
-        burger.add_ingredient(make_ingredient(INGREDIENT_TYPE_FILLING, 'cutlet', 200))
+    def test_receipt_lists_layers_and_final_price(self, draft_burger, selected_bun, ingredient_factory):
+        draft_burger.set_buns(selected_bun)
+        draft_burger.add_ingredient(ingredient_factory(INGREDIENT_TYPE_SAUCE, 'green sauce', 30))
+        draft_burger.add_ingredient(ingredient_factory(INGREDIENT_TYPE_FILLING, 'moon cutlet', 80))
         expected = (
-            '(==== black bun ====)\n'
-            '= sauce hot sauce =\n'
-            '= filling cutlet =\n'
-            '(==== black bun ====)\n\n'
-            'Price: 500'
+            '(==== nebula bun ====)\n'
+            '= sauce green sauce =\n'
+            '= filling moon cutlet =\n'
+            '(==== nebula bun ====)\n\n'
+            'Price: 360'
         )
-        assert burger.get_receipt() == expected
+        assert draft_burger.get_receipt() == expected

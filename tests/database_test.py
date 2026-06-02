@@ -4,38 +4,42 @@ from praktikum.ingredient import Ingredient
 from praktikum.ingredient_types import INGREDIENT_TYPE_FILLING, INGREDIENT_TYPE_SAUCE
 
 
+EXPECTED_BUNS = (
+    ('black bun', 100),
+    ('white bun', 200),
+    ('red bun', 300),
+)
+
+EXPECTED_INGREDIENTS = (
+    (INGREDIENT_TYPE_SAUCE, 'hot sauce', 100),
+    (INGREDIENT_TYPE_SAUCE, 'sour cream', 200),
+    (INGREDIENT_TYPE_SAUCE, 'chili sauce', 300),
+    (INGREDIENT_TYPE_FILLING, 'cutlet', 100),
+    (INGREDIENT_TYPE_FILLING, 'dinosaur', 200),
+    (INGREDIENT_TYPE_FILLING, 'sausage', 300),
+)
+
+
 class TestDatabase:
-    def test_available_buns_returns_buns_from_database(self):
-        database = Database()
+    def test_available_buns_match_seeded_menu(self):
+        storage = Database()
 
-        buns = database.available_buns()
+        stored_buns = storage.available_buns()
+        actual_buns = tuple((bun.get_name(), bun.get_price()) for bun in stored_buns)
 
-        assert buns is database.buns
-        assert all(isinstance(bun, Bun) for bun in buns)
-        assert [bun.get_name() for bun in buns] == ['black bun', 'white bun', 'red bun']
-        assert [bun.get_price() for bun in buns] == [100, 200, 300]
+        assert stored_buns is storage.buns
+        assert all(isinstance(bun, Bun) for bun in stored_buns)
+        assert actual_buns == EXPECTED_BUNS
 
-    def test_available_ingredients_returns_ingredients_from_database(self):
-        database = Database()
+    def test_available_ingredients_match_seeded_menu(self):
+        storage = Database()
 
-        ingredients = database.available_ingredients()
+        stored_ingredients = storage.available_ingredients()
+        actual_ingredients = tuple(
+            (ingredient.get_type(), ingredient.get_name(), ingredient.get_price())
+            for ingredient in stored_ingredients
+        )
 
-        assert ingredients is database.ingredients
-        assert all(isinstance(ingredient, Ingredient) for ingredient in ingredients)
-        assert [ingredient.get_type() for ingredient in ingredients] == [
-            INGREDIENT_TYPE_SAUCE,
-            INGREDIENT_TYPE_SAUCE,
-            INGREDIENT_TYPE_SAUCE,
-            INGREDIENT_TYPE_FILLING,
-            INGREDIENT_TYPE_FILLING,
-            INGREDIENT_TYPE_FILLING,
-        ]
-        assert [ingredient.get_name() for ingredient in ingredients] == [
-            'hot sauce',
-            'sour cream',
-            'chili sauce',
-            'cutlet',
-            'dinosaur',
-            'sausage',
-        ]
-        assert [ingredient.get_price() for ingredient in ingredients] == [100, 200, 300, 100, 200, 300]
+        assert stored_ingredients is storage.ingredients
+        assert all(isinstance(ingredient, Ingredient) for ingredient in stored_ingredients)
+        assert actual_ingredients == EXPECTED_INGREDIENTS

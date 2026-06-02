@@ -2,16 +2,17 @@ import runpy
 
 
 class TestPraktikum:
-    def test_main_prints_burger_receipt(self, capsys):
+    def test_script_prints_expected_demo_order(self, capsys):
         runpy.run_path('praktikum.py', run_name='__main__')
 
-        captured = capsys.readouterr()
+        output_lines = tuple(capsys.readouterr().out.splitlines())
 
-        assert captured.out == (
-            '(==== black bun ====)\n'
-            '= sauce sour cream =\n'
-            '= filling cutlet =\n'
-            '= filling dinosaur =\n'
-            '(==== black bun ====)\n\n'
-            'Price: 700\n'
+        assert output_lines == (
+            '(==== black bun ====)',
+            '= sauce sour cream =',
+            '= filling cutlet =',
+            '= filling dinosaur =',
+            '(==== black bun ====)',
+            '',
+            'Price: 700',
         )
