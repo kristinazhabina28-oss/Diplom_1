@@ -1,17 +1,31 @@
 import pytest
 
 from praktikum.ingredient import Ingredient
-from praktikum.ingredient_types import INGREDIENT_TYPE_FILLING, INGREDIENT_TYPE_SAUCE
+from tests.data import (
+    INGREDIENT_NAME,
+    INGREDIENT_NAME_CASES,
+    INGREDIENT_PRICE,
+    INGREDIENT_PRICE_CASES,
+    INGREDIENT_TYPE,
+    INGREDIENT_TYPE_CASES,
+)
 
 
 class TestIngredient:
-    @pytest.mark.parametrize('ingredient_type,name,price', [
-        (INGREDIENT_TYPE_SAUCE, 'berry sauce', 55),
-        (INGREDIENT_TYPE_FILLING, 'cheese cube', 95),
-    ])
-    def test_ingredient_has_type_name_and_price(self, ingredient_type, name, price):
-        menu_item = Ingredient(ingredient_type, name, price)
+    @pytest.mark.parametrize('ingredient_type', INGREDIENT_TYPE_CASES)
+    def test_get_type_returns_ingredient_type(self, ingredient_type):
+        menu_item = Ingredient(ingredient_type, INGREDIENT_NAME, INGREDIENT_PRICE)
 
         assert menu_item.get_type() == ingredient_type
+
+    @pytest.mark.parametrize('name', INGREDIENT_NAME_CASES)
+    def test_get_name_returns_ingredient_name(self, name):
+        menu_item = Ingredient(INGREDIENT_TYPE, name, INGREDIENT_PRICE)
+
         assert menu_item.get_name() == name
+
+    @pytest.mark.parametrize('price', INGREDIENT_PRICE_CASES)
+    def test_get_price_returns_ingredient_price(self, price):
+        menu_item = Ingredient(INGREDIENT_TYPE, INGREDIENT_NAME, price)
+
         assert menu_item.get_price() == price

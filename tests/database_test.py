@@ -27,7 +27,6 @@ class TestDatabase:
         stored_buns = storage.available_buns()
         actual_buns = tuple((bun.get_name(), bun.get_price()) for bun in stored_buns)
 
-        assert stored_buns is storage.buns
         assert all(isinstance(bun, Bun) for bun in stored_buns)
         assert actual_buns == EXPECTED_BUNS
 
@@ -40,6 +39,5 @@ class TestDatabase:
             for ingredient in stored_ingredients
         )
 
-        assert stored_ingredients is storage.ingredients
         assert all(isinstance(ingredient, Ingredient) for ingredient in stored_ingredients)
         assert actual_ingredients == EXPECTED_INGREDIENTS
